@@ -62,13 +62,14 @@ app.layout = html.Div(children=[html.H1('SpaceX Launch Records Dashboard',
 def get_pie_chart(entered_site):
     filtered_df = spacex_df
     if entered_site == 'ALL':
-        fig = px.pie(spacex_df, values='class', 
+        fig = px.pie(filtered_df, values='class', 
         names='Launch Site', 
         title='Class by Launch Site')
         return fig
     else:
-        filtered_df = spacex_df[spacex_df['Launch Site']==entered_site]
-        fig = px.pie(filtered_df, values=str('class'),
+        filtered_df = spacex_df[spacex_df['Launch Site']==entered_site].groupby(['Launch Site', 'class']). \
+        size().reset_index(name='class count')
+        fig = px.pie(filtered_df, values=('class count'),
         names='class', 
         title='Class of Launch Site')
         return fig
@@ -76,18 +77,19 @@ def get_pie_chart(entered_site):
 # TASK 4:
 # Add a callback function for `site-dropdown` and `payload-slider` as inputs, `success-payload-scatter-chart` as output
 @app.callback(Output(component_id='success-payload-scatter-chart', component_property='figure'),
-              [Input(component_id='site-dropdown', component_property='value'), Input(component_id="payload-slider", component_property="value")])
+              [Input(component_id='site-dropdown', component_property='value'), Input(component_id='payload-slider', component_property='value')])
 def get_scatter_graph(entered_site,entered_weight):
     filtered_df = spacex_df
     if entered_site == 'ALL':
-        fig = px.scatter(filtered_df, x = "Payload Mass (kg)", y = 'class', color="Booster Version Category")
+        fig = px.scatter(filtered_df, x = 'Payload Mass (kg)', y = 'class', color='Booster Version Category')
         return fig
     else:
         filtered_df = spacex_df[spacex_df['Launch Site']==entered_site & 
-                      spacex_df['Payload Mass (kg)']==entered_weight]
-        fig = px.scatter(filtered_df, x = "Payload Mass (kg)", y = 'class', color="Booster Version Category")
+                      spacex_df['Payload Mass (kg)']>=entered_weight[0] & spacex_df['Payload Mass (kg)']>=entered_weight[1]]
+        fig = px.scatter(filtered_df, x = 'Payload Mass (kg)', y = 'class', color='Booster Version Category')
         return fig
 
 # Run the app
 if __name__ == '__main__':
     app.run_server()
+
